@@ -1,0 +1,64 @@
+# Example sensor_schema config: a quadcopter-formation scenario with TWO
+# tracked entities plus one channel shared between them. Demonstrates a
+# different shape than vehicle_controls.schema.yaml -- multiple entities,
+# a shared (relational) channel, the vector gauge, and an auto-range
+# channel -- so the two shipped schemas together exercise every gauge
+# type, both channel scopes, value_labels, and auto-range.
+#
+# See sensor/validate.py for the structural rules this file must satisfy,
+# and sensor/query.py for how `entities` + `channels` map onto per-frame
+# field names (the `<entity>_<channel>` / `<shared-channel>` convention).
+
+version: 1
+
+frame_field: frame_number
+frame_base: 1
+fps_field: fps
+
+# Two formation members, each tracked independently.
+entities:
+  - name: drone_a
+    label: "Drone A"
+    color: "#1f77b4"
+  - name: drone_b
+    label: "Drone B"
+    color: "#ff7f0e"
+
+channels:
+  # Per-entity continuous channel: height above the ground.
+  - key: altitude
+    label: Altitude
+    unit: m
+    scope: entity
+    range: [0, 120]
+    gauge: radial
+    trace: true
+
+  # Per-entity continuous channel: remaining charge.
+  - key: battery
+    label: Battery
+    unit: "%"
+    scope: entity
+    range: [0, 100]
+    gauge: linear
+    trace: true
+
+  # Per-entity orientation relative to a fixed reference direction,
+  # rendered with the vector (deflection-from-reference) gauge widget.
+  - key: bearing
+    label: Bearing
+    unit: "\xB0"
+    scope: entity
+    range: [-180, 180]
+    gauge: vector
+    trace: true
+
+  # Shared (relational) channel: distance between the two formation
+  # members. Upper bound is null -> auto-range from the observed data.
+  - key: separation
+    label: Separation
+    unit: m
+    scope: shared
+    range: [0, null]
+    gauge: linear
+    trace: true

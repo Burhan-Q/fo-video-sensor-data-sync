@@ -4,7 +4,14 @@ __pycache__/
 docs/superpowers/
 .claude/
 .ref/
+.superpowers/
 *.png
 *.jpg
 *.pdf
+node_modules/
+tests/
+scripts/
+.playwright-mcp/
+*.mp4
+*.frames.json
 

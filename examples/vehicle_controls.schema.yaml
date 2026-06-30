@@ -1,0 +1,76 @@
+# Example sensor_schema config: a single tracked entity ("ego") with a
+# handful of simple control/state channels. Pairs with
+# vehicle_controls.data.json (a synthetic, deterministic drive profile).
+#
+# See sensor/validate.py for the structural rules this file must satisfy,
+# and sensor/query.py for how `entities` + `channels` map onto per-frame
+# field names (the `<entity>_<channel>` / `<shared-channel>` convention).
+
+version: 1
+
+# Per-frame index field in the source data, and its indexing base. FiftyOne
+# frames are 1-indexed; frame_base tells the loader how to normalize.
+frame_field: frame_number
+frame_base: 1
+
+# Optional sample-level field holding frames-per-second (drives an optional
+# time x-axis in the panels). Omit/null if not available.
+fps_field: fps
+
+# Named series to track. A single entity hides the series toggle in the UI.
+entities:
+  - name: ego
+    label: Ego
+
+# Each channel renders as a trace and/or a gauge widget, per its `gauge`
+# type. `range`'s upper bound may be null for auto-range from the data.
+channels:
+  # Binary control input: 0 (released) or 1 (applied).
+  - key: throttle
+    label: Throttle
+    scope: entity
+    range: [0, 1]
+    gauge: linear
+    trace: true
+
+  - key: brake
+    label: Brake
+    scope: entity
+    range: [0, 1]
+    gauge: linear
+    trace: true
+
+  # Continuous channel; rendered on a radial dial plus a trace line.
+  - key: velocity
+    label: Velocity
+    unit: kph
+    scope: entity
+    range: [0, 240]
+    gauge: radial
+    trace: true
+    color: "#2ca02c"  # quote hex colors -- "#" starts a YAML comment
+
+  # Discrete state with a value_labels lookup for human-readable ticks.
+  - key: gear
+    label: Gear
+    scope: entity
+    range: [0, 3]
+    gauge: linear
+    trace: true
+    value_labels:
+      0: park
+      1: reverse
+      2: neutral
+      3: drive
+
+  # Signed/center-zero channel -> the "signed" gauge type.
+  - key: turn_signal
+    label: Turn signal
+    scope: entity
+    range: [-1, 1]
+    gauge: signed
+    trace: true
+    value_labels:
+      -1: L
+      0: "—"
+      1: R

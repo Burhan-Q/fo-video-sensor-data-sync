@@ -1,0 +1,12 @@
+name: fo-video-sensor-data-sync
+type: plugin
+author: Burhan Qaddoumi
+version: 0.1.0
+description: Sync any per-frame numeric sensor data with video in FiftyOne — frame-accurate, playback-synced modal panels (traces + gauges)
+fiftyone:
+  version: ">=1.17.0"
+operators:
+  - get_frame_sensor_data
+panels:
+  - sensor_traces
+  - sensor_gauges
