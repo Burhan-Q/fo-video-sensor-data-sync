@@ -1,6 +1,7 @@
 __pycache__/
 .venv/
 *.env
+docs/superpowers/
 .claude/
 .ref/
 *.png
