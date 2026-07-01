@@ -52,6 +52,7 @@ declare module "@fiftyone/playback" {
   export function dispatchTimelineSetFrameNumberEvent(
     params: DispatchTimelineSetFrameNumberEventParams,
   ): void;
+  export function useFrameNumber(name?: string): number;
 }
 
 declare module "@fiftyone/operators" {

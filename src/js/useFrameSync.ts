@@ -1,53 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import {
   dispatchTimelineSetFrameNumberEvent,
   useDefaultTimelineNameImperative,
-  useTimeline,
+  useFrameNumber,
 } from "@fiftyone/playback";
-import { usePanelId } from "@fiftyone/spaces";
 
 /**
  * Bidirectional sync with the active video timeline.
  *
- * - Reads: subscribes to frame updates via useTimeline so the panel
- *   re-renders when the user scrubs the video.
- * - Writes: returns a `seekFrame` callback that drives the *video element*
- *   via dispatchTimelineSetFrameNumberEvent. The plain setFrameNumberAtom
- *   only updates Jotai subscribers (us, but not the looker), so we have
- *   to fire the DOM CustomEvent the looker listens for to actually move
- *   the playhead. The atom catches up via the looker's own callback
- *   once it has seeked.
+ * - Reads: `useFrameNumber` returns the timeline's current frame (a jotai atom
+ *   value), so the panel re-renders when the user plays/scrubs the video. This
+ *   is the read-only frame hook FiftyOne recommends; it manages its own
+ *   subscription lifecycle, avoiding the "replacing subscription" churn a raw
+ *   useTimeline().subscribe() incurs when the timeline name changes (e.g. when
+ *   switching modal samples). Returns -1 when no timeline is initialized.
+ * - Writes: `seekFrame` drives the video element via
+ *   dispatchTimelineSetFrameNumberEvent (the looker listens for that DOM event;
+ *   the atom catches up via the looker's own callback once it has seeked).
  *
- * Returns null currentFrame when there's no active timeline (e.g.
- * panel is open in grid mode without a modal video).
+ * currentFrame is null when there is no active/initialized timeline (e.g. grid
+ * mode without a modal video).
  */
 export function useFrameSync() {
-  const panelId = usePanelId();
   const { getName } = useDefaultTimelineNameImperative();
   const timelineName = getName();
 
-  const { subscribe, isTimelineInitialized } = useTimeline(timelineName);
-
-  const [currentFrame, setCurrentFrame] = useState<number | null>(null);
-  const currentFrameRef = useRef<number | null>(null);
-  currentFrameRef.current = currentFrame;
-
-  const renderFrame = useCallback((frameNumber: number) => {
-    if (currentFrameRef.current !== frameNumber) {
-      setCurrentFrame(frameNumber);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isTimelineInitialized) return;
-    subscribe({
-      id: panelId,
-      loadRange: async () => {
-        /* nothing to preload — sensor data is already in memory */
-      },
-      renderFrame,
-    });
-  }, [isTimelineInitialized, subscribe, renderFrame, panelId]);
+  const frame = useFrameNumber(timelineName);
+  const currentFrame = frame >= 0 ? frame : null;
 
   const seekFrame = useCallback(
     (frameNumber: number) => {
@@ -64,6 +43,6 @@ export function useFrameSync() {
     currentFrame,
     seekFrame,
     timelineName,
-    isTimelineActive: isTimelineInitialized,
+    isTimelineActive: frame >= 0,
   };
 }

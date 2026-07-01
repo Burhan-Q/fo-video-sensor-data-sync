@@ -34,10 +34,6 @@ const TRACK_COLOR = "rgba(80,80,100,0.5)";
 // Utility
 // ---------------------------------------------------------------------------
 
-function allNull(arr: Array<number | null> | undefined): boolean {
-  return !arr || arr.every((v) => v == null);
-}
-
 /** Clamp idx to [0, len-1]. */
 function clampIdx(idx: number, len: number): number {
   return Math.max(0, Math.min(len - 1, idx));
@@ -450,7 +446,7 @@ interface EntityGroup {
 }
 
 /** Build the gauge specs for a single (entity | shared) column key prefix. */
-function buildGauge(
+export function buildGauge(
   channel: Channel,
   renderKey: string,
   column: Array<number | null> | undefined,
@@ -470,8 +466,12 @@ function buildGauge(
 
   if (channel.gauge === "radial") {
     const lo = channel.range?.[0] ?? 0;
+    // Auto-range (range[1] omitted): round the column max up to the nearest
+    // 20, but floor it at lo + 20 so an all-negative-or-zero column can't
+    // collapse the span to a degenerate min >= max gauge.
     const hiOrAuto =
-      channel.range?.[1] ?? Math.ceil(maxVal(column, lo + 1) / 20) * 20;
+      channel.range?.[1] ??
+      Math.max(Math.ceil(maxVal(column, lo + 1) / 20) * 20, lo + 20);
     return { ...base, min: lo, max: hiOrAuto };
   }
   if (channel.gauge === "signed") {
@@ -699,7 +699,10 @@ export function GaugesPanel() {
 
   const schema = data?.schema ?? null;
 
-  // 1-based currentFrame → 0-based array index; null → 0.
+  // 1-based currentFrame → 0-based array index; null → 0. The null → 0
+  // fallback is intentional: with no active timeline (e.g. the brief
+  // pre-initialization moment, or a non-modal context) the gauges show the
+  // first frame's values as a sensible default rather than blanking.
   const frameIdx = currentFrame != null ? currentFrame - 1 : 0;
 
   const groups = useMemo(() => {

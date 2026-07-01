@@ -22,7 +22,8 @@ FiftyOne plugins directory instead:
 
 ```bash
 git clone https://github.com/Burhan-Q/fo-video-sensor-data-sync
-ln -s "$(pwd)/fo-video-sensor-data-sync" "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync"
+mkdir -p "$(fiftyone config plugins_dir)/@Burhan-Q"
+ln -s "$(pwd)/fo-video-sensor-data-sync" "$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync"
 ```
 
 (`FIFTYONE_PLUGINS_DIR` defaults to `~/fiftyone/__plugins__` if unset.)
@@ -36,7 +37,7 @@ committed in this repository.
 from any working directory, since it resolves its own paths on disk:
 
 ```bash
-python "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync/examples/load_demo.py" \
+python "$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync/examples/load_demo.py" \
     /path/to/video.mp4 --example vehicle_controls
 ```
 
@@ -59,7 +60,7 @@ import fiftyone.operators as foo
 
 dataset = fo.Dataset("my-sensor-data")  # or fo.load_dataset("...")
 import_sensor_data = foo.get_operator(
-    "fo-video-sensor-data-sync/import_sensor_data"
+    "@Burhan-Q/fo-video-sensor-data-sync/import_sensor_data"
 )
 import_sensor_data(
     dataset,
@@ -80,7 +81,7 @@ the load end to end; it self-resolves the plugin directory the same way.
 FiftyOne running, by invoking the validator by its file path:
 
 ```bash
-python "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync/sensor/validate.py" \
+python "$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync/sensor/validate.py" \
     examples/vehicle_controls/schema.yaml examples/vehicle_controls/data.json
 ```
 

@@ -142,8 +142,9 @@ export interface PlotlyLayout {
   hoverlabel: any;
   xaxis: any;
   yaxis?: any;
-  yaxis2?: any;
-  yaxis3?: any;
+  // Dynamic stacked y-axes: yaxis2, yaxis3, ... one per traced channel beyond
+  // the first, assigned via `layoutAxisKey` in buildLayout.
+  [key: `yaxis${string}`]: any;
   shapes: any[];
 }
 

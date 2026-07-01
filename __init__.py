@@ -36,7 +36,7 @@ class GetFrameSensorData(foo.Operator):
 class ImportSensorData(foo.Operator):
     """Loads one per-frame sensor run onto a video sample.
 
-    SDK-callable: ``foo.get_operator("fo-video-sensor-data-sync/import_sensor_data")``
+    SDK-callable: ``foo.get_operator("@Burhan-Q/fo-video-sensor-data-sync/import_sensor_data")``
     returns an instance of this class, which can be called directly as
     ``import_sensor_data(dataset, video_path=..., frames_path=..., schema=..., cap_id=...)``
     with no plugin-internal import required.

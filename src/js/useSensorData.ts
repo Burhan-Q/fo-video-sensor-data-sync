@@ -10,7 +10,7 @@ import { useRecoilValue } from "recoil";
 import { nullableModalSampleId } from "@fiftyone/state";
 import type { SensorResult } from "./types";
 
-const OPERATOR_URI = "fo-video-sensor-data-sync/get_frame_sensor_data";
+const OPERATOR_URI = "@Burhan-Q/fo-video-sensor-data-sync/get_frame_sensor_data";
 
 /**
  * Returns a stable `call(params)` that fires the operator and resolves with its
@@ -82,6 +82,7 @@ export function useSensorData(): UseSensorDataResult {
 
     // Cache hit — serve immediately.
     if (cache.current && cache.current.id === sampleId) {
+      inflight.current = sampleId;
       setData(cache.current.data);
       setLoading(false);
       setError(null);
