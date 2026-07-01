@@ -1,6 +1,6 @@
 # Example sensor_schema config: a quadcopter-formation scenario with TWO
 # tracked entities plus one channel shared between them. Demonstrates a
-# different shape than vehicle_controls.schema.yaml -- multiple entities,
+# different shape than the vehicle_controls example -- multiple entities,
 # a shared (relational) channel, the vector gauge, and an auto-range
 # channel -- so the two shipped schemas together exercise every gauge
 # type, both channel scopes, value_labels, and auto-range.

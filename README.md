@@ -2,25 +2,97 @@
 
 A community [FiftyOne](https://github.com/voxel51/fiftyone) plugin that syncs
 any per-frame numeric sensor data with video — frame-accurate and driven
-entirely by a declarative schema — via two modal panels (traces + gauges) that
-track the video timeline during playback. No per-dataset code.
+entirely by a declarative schema — via two modal panels (traces + gauges)
+that track the video timeline during playback. No per-dataset code: author a
+schema once, load your data with the loader convention, and the panels pick
+up the rest.
 
 Requires FiftyOne ≥ 1.17 and Python ≥ 3.11.
 
-## Install
+## Installation
 
-FiftyOne plugins install by clone: check out this repository directly into
-your FiftyOne plugins directory.
+Install directly from GitHub with FiftyOne's plugin download command:
 
 ```bash
-git clone https://github.com/Burhan-Q/fo-video-sensor-data-sync \
-  "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync"
+fiftyone plugins download https://github.com/Burhan-Q/fo-video-sensor-data-sync
 ```
 
-(`FIFTYONE_PLUGINS_DIR` defaults to `~/.fiftyone/plugins` if unset.)
+**For local development**, clone the repository and symlink it into your
+FiftyOne plugins directory instead:
+
+```bash
+git clone https://github.com/Burhan-Q/fo-video-sensor-data-sync
+ln -s "$(pwd)/fo-video-sensor-data-sync" "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync"
+```
+
+(`FIFTYONE_PLUGINS_DIR` defaults to `~/fiftyone/__plugins__` if unset.)
 
 No build step is required — the runtime bundle (`dist/index.umd.js`) ships
 committed in this repository.
+
+## Quickstart
+
+**Try a shipped example** with the self-resolving demo script — it works
+from any working directory, since it resolves its own paths on disk:
+
+```bash
+python "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync/examples/load_demo.py" \
+    /path/to/video.mp4 --example vehicle_controls
+```
+
+(also `--example drone_flight`). This attaches the chosen example's schema
+and synthetic per-frame data to your video as a new sample. Then open that
+sample's modal in the FiftyOne App to see the Sensor Traces and Sensor
+Gauges panels, synced to the video timeline.
+
+**Load your own data:** author a YAML schema describing your entities and
+channels (see [the `sensor_schema` contract](#the-sensor_schema-contract)
+below), and prepare a wide-format JSON or CSV file of per-frame rows, with
+columns named by the field-name convention (one row per frame). The
+simplest way to load it today is to copy `examples/load_demo.py` — it
+self-resolves the plugin directory, so it needs no `PYTHONPATH` or
+`sys.path` setup — and point it at your own schema and data paths instead
+of an example's.
+
+**Validate a schema (and optionally a data file) standalone**, without
+FiftyOne running, by invoking the validator by its file path:
+
+```bash
+python "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync/sensor/validate.py" \
+    examples/vehicle_controls/schema.yaml examples/vehicle_controls/data.json
+```
+
+This prints `OK` if the schema (and data, if given) is valid, or lists each
+problem found otherwise.
+
+## Activation
+
+The two panels — **Sensor Traces** and **Sensor Gauges** — appear on any
+**video** dataset whose samples carry a **`cap_id`** field. When active,
+their render config is read from `dataset.info["sensor_schema"]`. If a video
+dataset has no `cap_id` field on its samples, the panels do not activate for
+that dataset.
+
+## Known limitations
+
+- **Modal-only surface.** The synced experience needs the sample-modal
+  video timeline; the panels do not appear on the grid surface, which has
+  no per-sample modal timeline and so cannot reproduce the synced playhead.
+  This is a deliberate trade-off, not an oversight.
+- **Shared modal layout storage.** As of FiftyOne 1.17, the modal layout is
+  stored as a single global `localStorage` blob shared across all datasets,
+  with no per-dataset scoping or pruning. This means deactivated panels can
+  occasionally linger as harmless, cosmetic "ghost" tabs when you switch to
+  a different dataset, until you close them manually.
+- **Forkers: never mutate the global modal layout.** Because that layout
+  storage is global and unscoped, a plugin that tries to "clean up" or
+  evict its own panel from it risks corrupting the layout for every
+  dataset, not just its own — including by your panels. Treat it as
+  read-only.
+- **Frame-accuracy, precisely defined.** Synchronization is achieved via a
+  per-frame sidecar indexed to video frames (see the field-name convention
+  below) — it tracks frame numbers, not wall-clock or sub-frame timing
+  beyond what the source data provides.
 
 ## The `sensor_schema` contract
 
@@ -59,7 +131,9 @@ Each entry in `channels[]` has the shape:
   none).
 - `value_labels` — maps a numeric value to a display string, e.g.
   `{0: "park", 1: "reverse", 2: "neutral", 3: "drive"}` for a discrete
-  `gear` channel.
+  `gear` channel. Map keys are matched against the **string form of the
+  numeric value** (e.g. `"3"`, not `"3.0"`; negatives like `"-1"` work) —
+  the panels look up `value_labels[String(value)]`.
 
 ### Field-name convention
 
@@ -114,88 +188,48 @@ channels:
     trace: true
 ```
 
-See [`examples/vehicle_controls.schema.yaml`](examples/vehicle_controls.schema.yaml)
-and [`examples/drone_flight.schema.yaml`](examples/drone_flight.schema.yaml)
+See [`examples/vehicle_controls/schema.yaml`](examples/vehicle_controls/schema.yaml)
+and [`examples/drone_flight/schema.yaml`](examples/drone_flight/schema.yaml)
 for two full, runnable schemas — together they exercise every gauge type,
 both channel scopes, `value_labels`, and auto-range.
 
-## Activation
+## Repo structure
 
-The two panels — **Sensor Traces** and **Sensor Gauges** — appear on any
-**video** dataset whose samples carry a **`cap_id`** field. When active,
-their render config is read from `dataset.info["sensor_schema"]`. If a video
-dataset has no `cap_id` field on its samples, the panels do not activate for
-that dataset.
-
-## Quickstart
-
-1. Author a YAML schema describing your entities and channels (see above).
-2. Prepare a wide-format JSON or CSV file of per-frame rows, with columns
-   named by the field-name convention (one row per frame).
-3. Load the video + sidecar data with the example loader:
-
-```python
-import fiftyone as fo
-from sensor.loader import import_run
-
-schema = {
-    "version": 1,
-    "frame_field": "frame_number",
-    "frame_base": 1,
-    "entities": [{"name": "ego", "label": "Ego"}],
-    "channels": [
-        {
-            "key": "velocity",
-            "label": "Velocity",
-            "scope": "entity",
-            "range": [0, 240],
-            "gauge": "radial",
-            "trace": True,
-        },
-        {
-            "key": "steering",
-            "label": "Steering",
-            "scope": "entity",
-            "range": [-1, 1],
-            "gauge": "signed",
-            "trace": True,
-        },
-    ],
-}
-
-dataset = import_run("drive.mp4", "drive.json", schema, cap_id="run-1")
+```
+fo-video-sensor-data-sync/
+├── __init__.py              # Plugin entry point: registers the panels + operator
+├── fiftyone.yml              # Plugin manifest (name, version, panels, operators)
+├── sensor/                   # Python package: schema-driven loading + querying
+│   ├── __init__.py
+│   ├── loader.py              # Wide-format JSON/CSV -> per-frame FiftyOne fields
+│   ├── query.py                # Reads sensor_schema + per-frame fields for the panels
+│   └── validate.py             # sensor_schema structural validation (+ CLI)
+├── src/js/                   # Panel front-end (React/TypeScript source)
+├── dist/index.umd.js         # Committed, pre-built runtime bundle (no build step needed)
+├── examples/                  # Runnable example schemas + synthetic data
+│   ├── load_demo.py            # Self-resolving demo script (see Quickstart)
+│   ├── vehicle_controls/       # schema.yaml + data.json + README.md
+│   └── drone_flight/           # schema.yaml + data.json + README.md
+├── package.json               # JS package metadata + build scripts
+├── vite.config.mts            # Vite build config for the JS bundle
+├── tsconfig.json              # TypeScript config
+├── pyproject.toml             # Python package metadata
+├── README.md                  # This file
+└── LICENSE                    # Apache-2.0
 ```
 
-4. Open a sample's modal in the FiftyOne App — the Sensor Traces and Sensor
-   Gauges panels appear, synced to the video timeline.
+## Sample-level summary fields
 
-You can validate a schema (and optionally a data file) standalone, without
-FiftyOne running:
+In addition to the per-frame fields described above, the loader
+(`sensor/loader.py`) writes three sample-level scalar fields for every
+per-frame column it loads: `<col>_min`, `<col>_max`, and `<col>_mean`
+(e.g. `ego_velocity_min`, `ego_velocity_max`, `ego_velocity_mean`).
 
-```bash
-python -m sensor.validate config.yaml [data.json]
-```
-
-## Known limitations
-
-- **Modal-only surface.** The synced experience needs the sample-modal
-  video timeline; the panels do not appear on the grid surface, which has
-  no per-sample modal timeline and so cannot reproduce the synced playhead.
-  This is a deliberate trade-off, not an oversight.
-- **Shared modal layout storage.** As of FiftyOne 1.17, the modal layout is
-  stored as a single global `localStorage` blob shared across all datasets,
-  with no per-dataset scoping or pruning. This means deactivated panels can
-  occasionally linger as harmless, cosmetic "ghost" tabs when you switch to
-  a different dataset, until you close them manually.
-- **Forkers: never mutate the global modal layout.** Because that layout
-  storage is global and unscoped, a plugin that tries to "clean up" or
-  evict its own panel from it risks corrupting the layout for every
-  dataset, not just its own — including by your panels. Treat it as
-  read-only.
-- **Frame-accuracy, precisely defined.** Synchronization is achieved via a
-  per-frame sidecar indexed to video frames (see the field-name convention
-  above) — it tracks frame numbers, not wall-clock or sub-frame timing
-  beyond what the source data provides.
+Per-frame fields live under `frames[]` and are not queryable at the sample
+level. The sample-level summary scalars exist so you can sort, filter, and
+aggregate across samples directly in the App's grid and sidebar — giving an
+at-a-glance summary of each sample's sensor ranges without opening the
+modal.
 
 ## License
 

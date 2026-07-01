@@ -1,6 +1,6 @@
 # Example sensor_schema config: a single tracked entity ("ego") with a
 # handful of simple control/state channels. Pairs with
-# vehicle_controls.data.json (a synthetic, deterministic drive profile).
+# data.json (a synthetic, deterministic drive profile) in this same dir.
 #
 # See sensor/validate.py for the structural rules this file must satisfy,
 # and sensor/query.py for how `entities` + `channels` map onto per-frame

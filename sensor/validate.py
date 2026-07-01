@@ -7,7 +7,7 @@ This module is the single source of truth for two things:
     user author/import a schema before it is attached to a dataset.
   - The ``<entity>_<channel>`` / ``<shared-channel>`` field-name
     convention (see ``_expected_columns``), reused verbatim by the
-    loader (Task 3) so the convention is defined in exactly one place.
+    loader so the convention is defined in exactly one place.
 
 ``validate`` never raises: it accumulates problems into a list of
 human-readable strings and returns that list (``[]`` means valid).
@@ -203,7 +203,7 @@ def validate(config: dict, sample_record: dict | None = None) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI entry point: ``python -m sensor.validate config.yaml [data.json]``."""
+    """CLI entry point: ``python sensor/validate.py config.yaml [data.json]``."""
     import argparse
     import json
 

@@ -1,8 +1,9 @@
-"""Demo: load the shipped vehicle_controls example onto a video using the core loader.
+"""Demo: load a shipped example onto a video using the core loader.
 
-Usage:  python examples/load_demo.py /path/to/video.mp4
-Attaches the vehicle_controls schema + synthetic data (in this folder) to the
-given video as a new sample, then you can open its modal to see the panels.
+Usage:  python examples/load_demo.py /path/to/video.mp4 --example vehicle_controls
+Attaches the chosen example's schema + synthetic data (examples/<example>/)
+to the given video as a new sample, then you can open its modal to see the
+panels.
 """
 
 from __future__ import annotations
@@ -19,18 +20,22 @@ import yaml  # noqa: E402
 
 from sensor.loader import import_run  # noqa: E402
 
+EXAMPLES = ("vehicle_controls", "drone_flight")
+
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
-        description="Load the vehicle_controls demo onto a video sample."
+        description="Load a shipped example onto a video sample."
     )
     parser.add_argument("video", help="Path to a video file.")
+    parser.add_argument("--example", choices=EXAMPLES, default="vehicle_controls")
     parser.add_argument("--dataset-name", default="vehicle-controls-demo")
     parser.add_argument("--cap-id", default="demo-run")
     args = parser.parse_args(argv)
 
-    schema = yaml.safe_load(open(os.path.join(HERE, "vehicle_controls.schema.yaml")))
-    data = os.path.join(HERE, "vehicle_controls.data.json")
+    example_dir = os.path.join(HERE, args.example)
+    schema = yaml.safe_load(open(os.path.join(example_dir, "schema.yaml")))
+    data = os.path.join(example_dir, "data.json")
     dataset = import_run(
         args.video,
         data,

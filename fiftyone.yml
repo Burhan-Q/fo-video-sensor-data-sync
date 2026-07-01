@@ -3,6 +3,14 @@ type: plugin
 author: Burhan Qaddoumi
 version: 0.1.0
 description: Sync any per-frame numeric sensor data with video in FiftyOne — frame-accurate, playback-synced modal panels (traces + gauges)
+url: https://github.com/Burhan-Q/fo-video-sensor-data-sync
+license: Apache-2.0
+tags:
+  - video
+  - sensor
+  - time-series
+  - panel
+  - visualization
 fiftyone:
   version: ">=1.17.0"
 operators:
