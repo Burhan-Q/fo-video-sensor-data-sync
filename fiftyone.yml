@@ -15,6 +15,7 @@ fiftyone:
   version: ">=1.17.0"
 operators:
   - get_frame_sensor_data
+  - import_sensor_data
 panels:
   - sensor_traces
   - sensor_gauges

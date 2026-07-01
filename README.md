@@ -48,11 +48,33 @@ Gauges panels, synced to the video timeline.
 **Load your own data:** author a YAML schema describing your entities and
 channels (see [the `sensor_schema` contract](#the-sensor_schema-contract)
 below), and prepare a wide-format JSON or CSV file of per-frame rows, with
-columns named by the field-name convention (one row per frame). The
-simplest way to load it today is to copy `examples/load_demo.py` — it
-self-resolves the plugin directory, so it needs no `PYTHONPATH` or
-`sys.path` setup — and point it at your own schema and data paths instead
-of an example's.
+columns named by the field-name convention (one row per frame). Then load
+it with the `import_sensor_data` operator — a normal FiftyOne operator you
+can call directly from the SDK, with no plugin-internal import and no
+`sys.path` setup:
+
+```python
+import fiftyone as fo
+import fiftyone.operators as foo
+
+dataset = fo.Dataset("my-sensor-data")  # or fo.load_dataset("...")
+import_sensor_data = foo.get_operator(
+    "fo-video-sensor-data-sync/import_sensor_data"
+)
+import_sensor_data(
+    dataset,
+    video_path="drive.mp4",
+    frames_path="drive.json",
+    schema="schema.yaml",   # path to a schema YAML file
+    cap_id="run-1",
+)
+```
+
+`schema` must be a path to a schema YAML file (an inline dict is not
+supported — the operator validates its params before running, and that
+validation only declares a `schema_path` string property). You can also
+copy `examples/load_demo.py` as a starting point if you'd rather script
+the load end to end; it self-resolves the plugin directory the same way.
 
 **Validate a schema (and optionally a data file) standalone**, without
 FiftyOne running, by invoking the validator by its file path:
@@ -63,7 +85,11 @@ python "$(fiftyone config plugins_dir)/fo-video-sensor-data-sync/sensor/validate
 ```
 
 This prints `OK` if the schema (and data, if given) is valid, or lists each
-problem found otherwise.
+problem found otherwise. The loader runs these same structural checks
+automatically on import — fail-fast: an invalid schema raises with the full
+list of problems before anything is written — so validating standalone first
+is optional, but it lets you catch mistakes without launching FiftyOne. See
+[Schema validation](#schema-validation) for exactly what is checked.
 
 ## Activation
 
@@ -192,6 +218,28 @@ See [`examples/vehicle_controls/schema.yaml`](examples/vehicle_controls/schema.y
 and [`examples/drone_flight/schema.yaml`](examples/drone_flight/schema.yaml)
 for two full, runnable schemas — together they exercise every gauge type,
 both channel scopes, `value_labels`, and auto-range.
+
+### Schema validation
+
+The structural rules above are defined in one place (`sensor/validate.py`)
+and enforced at two layers:
+
+- **Schema content.** `version`, `frame_field`, `entities`, and `channels`
+  are required; each `channel.scope` must be `entity` or `shared`; each
+  `gauge` must be one of `radial`/`signed`/`linear`/`vector` (or `null`);
+  `range` must be `[lo, hi]` with `lo <= hi` (or `hi: null` for auto-range);
+  entity `name`s and channel `key`s must each be unique; `value_labels`, if
+  present, must map to string labels; and `frame_base` must be `0` or `1`.
+  When a data file is also supplied, validation additionally checks that
+  every expected per-frame column (per the field-name convention) is
+  present. These checks run standalone via the validator command in the
+  Quickstart **and** automatically on load — the loader (and the
+  `import_sensor_data` operator) validates fail-fast and raises with the
+  full list of problems before writing anything to the dataset.
+- **Operator parameters.** The `import_sensor_data` operator validates its
+  inputs (`video_path`, `frames_path`, `schema_path`, `cap_id`) as strings
+  before `execute` runs. That is why it takes a `schema_path` (a path to a
+  schema YAML file) rather than an inline schema dict.
 
 ## Repo structure
 
