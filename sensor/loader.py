@@ -1,15 +1,14 @@
-"""Generic example loader: per-frame sensor data -> a FiftyOne video sample.
+"""Generic loader: per-frame sensor data -> a FiftyOne video sample.
 
 This module knows nothing about any proprietary data format — it only
 enforces the ``sensor_schema`` field-name convention defined in
 ``sensor/validate.py`` (``_expected_columns``) and writes the same
 ``dataset.info["sensor_schema"]`` marker that ``sensor/query.py`` reads.
-Ships under ``examples/`` (not core) so integrators see a working,
-copy-pasteable pattern rather than a hidden implementation detail.
 
-Runnable standalone (e.g. ``python examples/load_sensor_data.py``) and
-importable as ``examples.load_sensor_data`` (e.g. from tests run with the
-repo root on ``sys.path``).
+Besides the per-frame columns, ``load_run`` also writes a per-channel
+sample-level summary: for every column with at least one written value,
+the sample gets ``f"{col}_min"``, ``f"{col}_max"``, and ``f"{col}_mean"``
+fields, computed over that column's values across the loaded frames.
 """
 
 from __future__ import annotations
@@ -18,13 +17,11 @@ import copy
 import csv
 import json
 import os
-import sys
 from pathlib import Path
 
 import fiftyone as fo
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from sensor.validate import _expected_columns, validate  # noqa: E402
+from .validate import _expected_columns, validate
 
 
 def _read_rows(frames_path: str | Path) -> list[dict]:
@@ -51,7 +48,9 @@ def load_run(
     Validates ``schema`` (fail-fast) against the first parsed row before
     touching the dataset, then writes per-frame columns following the
     ``<entity>_<channel>`` / ``<shared-channel>`` convention, the
-    ``cap_id`` activation marker, and stamps a JSON/Mongo-safe copy of
+    ``cap_id`` activation marker, a per-channel sample-level summary
+    (``f"{col}_min"``, ``f"{col}_max"``, ``f"{col}_mean"`` for every
+    column with at least one value), and stamps a JSON/Mongo-safe copy of
     ``schema`` onto ``dataset.info["sensor_schema"]``.
     """
     rows = _read_rows(frames_path)
@@ -78,6 +77,7 @@ def load_run(
         if sample.metadata is not None:
             total = sample.metadata.total_frame_count
 
+    col_values: dict[str, list[float]] = {c: [] for c in columns}
     for row in rows:
         n = int(row[frame_field]) + offset  # source base -> FiftyOne 1-based
         if total is not None and n > total:
@@ -85,12 +85,20 @@ def load_run(
         for col in columns:
             val = row.get(col)
             if val not in (None, ""):
-                sample.frames[n][col] = float(val)
+                fval = float(val)
+                sample.frames[n][col] = fval
+                col_values[col].append(fval)
 
     sample["cap_id"] = cap_id
 
     if fps_field and rows and fps_field in rows[0]:
         sample[fps_field] = float(rows[0][fps_field])
+
+    for col, vals in col_values.items():
+        if vals:
+            sample[f"{col}_min"] = min(vals)
+            sample[f"{col}_max"] = max(vals)
+            sample[f"{col}_mean"] = round(sum(vals) / len(vals), 4)
 
     sample.save()
 

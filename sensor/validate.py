@@ -200,3 +200,41 @@ def validate(config: dict, sample_record: dict | None = None) -> list[str]:
                 errors.append(f"sample_record missing expected column: {column!r}")
 
     return errors
+
+
+def main(argv: list[str] | None = None) -> int:
+    """CLI entry point: ``python -m sensor.validate config.yaml [data.json]``."""
+    import argparse
+    import json
+
+    import yaml
+
+    parser = argparse.ArgumentParser(
+        description="Validate a sensor_schema YAML config."
+    )
+    parser.add_argument("config", help="Path to the sensor_schema YAML config.")
+    parser.add_argument(
+        "data",
+        nargs="?",
+        help="Optional JSON data file; row 0 is checked against the schema.",
+    )
+    args = parser.parse_args(argv)
+
+    config = yaml.safe_load(open(args.config))
+    sample_record = None
+    if args.data:
+        rows = json.load(open(args.data))
+        sample_record = rows[0] if isinstance(rows, list) and rows else None
+    errors = validate(config, sample_record)
+    if errors:
+        for e in errors:
+            print(e)
+        return 1
+    print("OK")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+
+    sys.exit(main())

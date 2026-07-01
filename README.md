@@ -136,7 +136,7 @@ that dataset.
 
 ```python
 import fiftyone as fo
-from examples.load_sensor_data import import_run
+from sensor.loader import import_run
 
 schema = {
     "version": 1,
@@ -173,7 +173,7 @@ You can validate a schema (and optionally a data file) standalone, without
 FiftyOne running:
 
 ```bash
-python examples/validate_config.py config.yaml [data.json]
+python -m sensor.validate config.yaml [data.json]
 ```
 
 ## Known limitations
