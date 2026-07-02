@@ -4,7 +4,7 @@ Two tracked entities, `drone_a` and `drone_b`, flying in formation:
 
 - `altitude` -- per-entity, radial gauge, unit `m`
 - `battery` -- per-entity, linear gauge, unit `%`
-- `bearing` -- per-entity, vector gauge, unit deg
+- `bearing` -- per-entity, vector gauge, unit `°`
 - `separation` -- a channel SHARED between the two entities (auto-range,
   `hi: null`), linear gauge, unit `m`
 

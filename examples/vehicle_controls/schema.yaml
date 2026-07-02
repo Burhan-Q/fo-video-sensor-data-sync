@@ -8,16 +8,17 @@
 
 version: 1
 
-# Per-frame index field in the source data, and its indexing base. FiftyOne
-# frames are 1-indexed; frame_base tells the loader how to normalize.
+# Per-frame index column in the source data (any column name works), and its
+# indexing base. FiftyOne frames are 1-indexed; frame_base tells the loader
+# how to normalize onto the built-in frame_number index.
 frame_field: frame_number
 frame_base: 1
 
-# Optional sample-level field holding frames-per-second (drives an optional
-# time x-axis in the panels). Omit/null if not available.
+# Optional source-row key holding frames-per-second (copied onto the sample
+# and returned alongside the per-frame arrays). Omit/null if not available.
 fps_field: fps
 
-# Named series to track. A single entity hides the series toggle in the UI.
+# Named series to track. This example uses a single entity.
 entities:
   - name: ego
     label: Ego

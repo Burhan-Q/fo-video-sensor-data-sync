@@ -8,8 +8,8 @@ channels:
 - `gear` -- discrete state with `value_labels` (linear gauge)
 - `turn_signal` -- signed/center-zero state with `value_labels` (signed gauge)
 
-Demonstrates: a single entity (the series toggle is hidden in the UI),
-`value_labels`, and the radial/linear/signed gauge types.
+Demonstrates: a single entity, `value_labels`, and the radial/linear/signed
+gauge types.
 
 ## Run
 
