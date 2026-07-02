@@ -1,7 +1,5 @@
 """Operator entrypoint for the video+sensor sync plugin."""
 
-from __future__ import annotations
-
 from pathlib import Path
 
 import yaml
@@ -9,6 +7,7 @@ import yaml
 import fiftyone as fo
 import fiftyone.operators as foo
 import fiftyone.operators.types as types
+from fiftyone.plugins.context import PluginContext
 
 try:
     from .sensor.loader import load_run
@@ -19,15 +18,23 @@ except ImportError:
 
 
 class GetFrameSensorData(foo.Operator):
+    """Read operator: per-frame sensor arrays for one video sample.
+
+    Unlisted; the JS panels call it to fetch the arrays they render.
+    Delegates entirely to ``sensor.query.frame_sensor_arrays``.
+    """
+
     @property
     def config(self) -> foo.OperatorConfig:
+        """The operator's registration config."""
         return foo.OperatorConfig(
             name="get_frame_sensor_data",
             label="Get frame sensor data",
             unlisted=True,
         )
 
-    def execute(self, ctx) -> dict:
+    def execute(self, ctx: foo.executor.ExecutionContext) -> dict:
+        """Return the sensor arrays for ``ctx.params["sample_id"]``."""
         if "sample_id" not in ctx.params:
             raise ValueError("get_frame_sensor_data: 'sample_id' is required")
         return frame_sensor_arrays(ctx.view, ctx.params["sample_id"])
@@ -50,12 +57,14 @@ class ImportSensorData(foo.Operator):
 
     @property
     def config(self) -> foo.OperatorConfig:
+        """The operator's registration config."""
         return foo.OperatorConfig(
             name="import_sensor_data",
             label="Import sensor data",
         )
 
-    def resolve_input(self, ctx) -> types.Property:
+    def resolve_input(self, ctx: foo.executor.ExecutionContext) -> types.Property:
+        """Declare the operator's required string inputs."""
         inputs = types.Object()
         inputs.str("video_path", label="Video path", required=True)
         inputs.str("frames_path", label="Per-frame data path (JSON/CSV)", required=True)
@@ -63,9 +72,9 @@ class ImportSensorData(foo.Operator):
         inputs.str("cap_id", label="Activation id (cap_id)", required=True)
         return types.Property(inputs)
 
-    def execute(self, ctx) -> dict:
-        with open(ctx.params["schema_path"]) as f:
-            schema = yaml.safe_load(f)
+    def execute(self, ctx: foo.executor.ExecutionContext) -> dict:
+        """Load the run described by ``ctx.params`` into ``ctx.dataset``."""
+        schema = yaml.safe_load(Path(ctx.params["schema_path"]).read_text())
         load_run(
             ctx.dataset,
             ctx.params["video_path"],
@@ -100,6 +109,7 @@ class ImportSensorData(foo.Operator):
         return dataset
 
 
-def register(p) -> None:
+def register(p: PluginContext) -> None:
+    """Register both operators with the plugin context."""
     p.register(GetFrameSensorData)
     p.register(ImportSensorData)

@@ -1,6 +1,6 @@
 """Generic loader: per-frame sensor data -> a FiftyOne video sample.
 
-This module knows nothing about any proprietary data format — it only
+This module knows nothing about any specific data format — it only
 enforces the ``sensor_schema`` field-name convention defined in
 ``sensor/validate.py`` (``_expected_columns``) and writes the same
 ``dataset.info["sensor_schema"]`` marker that ``sensor/query.py`` reads.
@@ -9,14 +9,14 @@ Besides the per-frame columns, ``load_run`` also writes a per-channel
 sample-level summary: for every column with at least one written value,
 the sample gets ``f"{col}_min"``, ``f"{col}_max"``, and ``f"{col}_mean"``
 fields, computed over that column's values across the loaded frames.
+Schemas may additionally declare ``sample_fields`` — source-row keys
+copied verbatim from the first row onto the sample as sample-level
+fields (the generalization of ``fps_field``).
 """
-
-from __future__ import annotations
 
 import copy
 import csv
 import json
-import os
 from pathlib import Path
 
 import fiftyone as fo
@@ -25,7 +25,21 @@ from .validate import _expected_columns, validate
 
 
 def _read_rows(frames_path: str | Path) -> list[dict]:
-    """Wide-format rows: a CSV with a header, or a JSON list of objects."""
+    """Parse wide-format per-frame rows from a JSON or CSV file.
+
+    Parameters
+    ----------
+    frames_path:
+        Path to the source data: a ``.json`` file holding a non-empty
+        list of objects, or any other suffix parsed as a CSV with a
+        header row.
+
+    Returns
+    -------
+    list[dict]
+        One dict per frame row. CSV values are strings; JSON values
+        keep their parsed types.
+    """
     frames_path = Path(frames_path)
     if frames_path.suffix == ".json":
         rows = json.loads(frames_path.read_text())
@@ -48,10 +62,32 @@ def load_run(
     Validates ``schema`` (fail-fast) against the first parsed row before
     touching the dataset, then writes per-frame columns following the
     ``<entity>_<channel>`` / ``<shared-channel>`` convention, the
-    ``cap_id`` activation marker, a per-channel sample-level summary
-    (``f"{col}_min"``, ``f"{col}_max"``, ``f"{col}_mean"`` for every
-    column with at least one value), and stamps a JSON/Mongo-safe copy of
-    ``schema`` onto ``dataset.info["sensor_schema"]``.
+    ``cap_id`` activation marker, the ``fps_field`` value (float, when
+    declared and present in row 0), any declared ``sample_fields`` (row-0
+    values copied verbatim to the sample), a per-channel sample-level
+    summary (``f"{col}_min"``, ``f"{col}_max"``, ``f"{col}_mean"`` for
+    every column with at least one value), and stamps a JSON/Mongo-safe
+    copy of ``schema`` onto ``dataset.info["sensor_schema"]``.
+
+    Parameters
+    ----------
+    dataset:
+        The dataset the new sample is added to.
+    video_path:
+        Path to the video media file. May be nonexistent (tests,
+        sidecar-only authoring); metadata is only probed when present.
+    frames_path:
+        Path to the per-frame source data (see ``_read_rows``).
+    schema:
+        A ``sensor_schema`` dict (validated fail-fast).
+    cap_id:
+        Activation marker written to the sample; the panels activate on
+        datasets whose samples carry this field.
+
+    Returns
+    -------
+    fo.Sample
+        The newly added, saved sample.
     """
     rows = _read_rows(frames_path)
 
@@ -72,7 +108,7 @@ def load_run(
     # stays None and all rows are loaded; when present, rows beyond the clip
     # are skipped.
     total: int | None = None
-    if os.path.exists(video_path):
+    if Path(video_path).exists():
         sample.compute_metadata()
         if sample.metadata is not None:
             total = sample.metadata.total_frame_count
@@ -93,6 +129,15 @@ def load_run(
 
     if fps_field and rows and fps_field in rows[0]:
         sample[fps_field] = float(rows[0][fps_field])
+
+    # User-declared sample-level fields: row-0 values pass through verbatim
+    # (str/number/bool/list — anything FiftyOne accepts). Label fields
+    # (detections, segments, ...) remain the caller's responsibility.
+    if rows:
+        for field in schema.get("sample_fields") or []:
+            value = rows[0].get(field)
+            if value not in (None, ""):
+                sample[field] = value
 
     for col, vals in col_values.items():
         if vals:
@@ -126,7 +171,31 @@ def import_run(
     persistent: bool = True,
     overwrite: bool = False,
 ) -> fo.Dataset:
-    """Create/load a dataset, add the run, and stamp the schema on it."""
+    """Create/load a dataset, add the run, and stamp the schema on it.
+
+    Parameters
+    ----------
+    video_path:
+        Path to the video media file (see ``load_run``).
+    frames_path:
+        Path to the per-frame source data (see ``_read_rows``).
+    schema:
+        A ``sensor_schema`` dict (validated fail-fast by ``load_run``).
+    cap_id:
+        Activation marker written to the sample.
+    dataset_name:
+        Name of the dataset to create or load.
+    persistent:
+        Whether a newly created dataset persists across sessions.
+    overwrite:
+        If the dataset already exists: ``True`` deletes and recreates
+        it; ``False`` (default) loads it and adds the run additively.
+
+    Returns
+    -------
+    fo.Dataset
+        The dataset containing the newly loaded run.
+    """
     if fo.dataset_exists(dataset_name):
         if overwrite:
             fo.delete_dataset(dataset_name)

@@ -7,20 +7,25 @@ package root ``__init__.py``) delegates entirely to
 without an operator context.
 
 The schema is read from ``dataset.info["sensor_schema"]`` and describes:
-  - ``frame_field``: the per-frame index field (e.g. ``"frame_number"``).
+  - ``frame_field``: the per-frame index field *in the source data* (a
+    load-time concept — after loading, frames are always indexed by
+    FiftyOne's built-in 1-based ``frame_number``, which is what this
+    module reads back).
   - ``fps_field``: the sample-level frames-per-second field, if any.
   - ``entities``: a list of ``{"name": ...}`` dicts (e.g. multiple tracked
     subjects in the video).
   - ``channels``: a list of ``{"key": ..., "scope": "entity" | "shared"}``
     dicts. An ``"entity"``-scoped channel is expanded once per entity
     (column key ``f"{entity}_{channel}"``); a ``"shared"``-scoped channel
-    produces a single column (column key ``channel``).
+    produces a single column (column key ``channel``) — see
+    ``sensor.validate._expected_columns``, the single definition of that
+    convention.
 """
-
-from __future__ import annotations
 
 import fiftyone as fo
 import fiftyone.core.view as fov
+
+from .validate import _expected_columns
 
 
 def _frame_paths(schema: dict) -> tuple[list[str], list[str]]:
@@ -30,21 +35,12 @@ def _frame_paths(schema: dict) -> tuple[list[str], list[str]]:
     -------
     tuple[list[str], list[str]]
         ``(paths, keys)`` where ``paths`` is ``frames[]``-prefixed field
-        paths (frame index field first, then one per column key) and
-        ``keys`` is the bare column keys in the same order as the
-        trailing entries of ``paths``.
+        paths (FiftyOne's built-in ``frame_number`` index first, then one
+        per column key) and ``keys`` is the bare column keys in the same
+        order as the trailing entries of ``paths``.
     """
-    frame_field: str = schema["frame_field"]
-
-    keys: list[str] = []
-    for channel in schema["channels"]:
-        if channel["scope"] == "entity":
-            for entity in schema["entities"]:
-                keys.append(f"{entity['name']}_{channel['key']}")
-        else:
-            keys.append(channel["key"])
-
-    paths: list[str] = [f"frames[].{frame_field}"] + [f"frames[].{key}" for key in keys]
+    keys = _expected_columns(schema)
+    paths = ["frames[].frame_number"] + [f"frames[].{key}" for key in keys]
     return paths, keys
 
 
