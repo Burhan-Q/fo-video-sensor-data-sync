@@ -9,6 +9,7 @@
 // share `visibleAxes()` so a trace's `yaxis` always matches its cursor
 // shape's `yref`.
 
+import { PALETTE } from "./palette";
 import type { SensorResult, SensorSchema, Channel } from "./types";
 
 export interface PlotlyTrace {
@@ -22,18 +23,6 @@ export interface PlotlyTrace {
   yaxis: string;
 }
 
-// Generic palette for traces lacking an explicit color.
-const PALETTE = [
-  "#1f77b4",
-  "#ff7f0e",
-  "#2ca02c",
-  "#d62728",
-  "#9467bd",
-  "#8c564b",
-  "#e377c2",
-  "#17becf",
-];
-
 // Vertical gap (paper fraction) between adjacent stacked subplots.
 const SUBPLOT_GAP = 0.08;
 
@@ -42,7 +31,7 @@ const SUBPLOT_GAP = 0.08;
 function traceAxis(i: number): string {
   return i === 0 ? "y" : `y${i + 1}`;
 }
-function layoutAxisKey(i: number): string {
+function layoutAxisKey(i: number): `yaxis${string}` {
   return i === 0 ? "yaxis" : `yaxis${i + 1}`;
 }
 
@@ -195,14 +184,13 @@ export function buildLayout(
       anchor: shown.length ? shown[shown.length - 1].axis : "y",
       ...axisGrid,
     },
-    yaxis: undefined as any,
     shapes: [],
   };
 
   shown.forEach(({ channel }, i) => {
     const top = round4(1.0 - i * (band + SUBPLOT_GAP));
     const bottom = round4(top - band);
-    (layout as any)[layoutAxisKey(i)] = {
+    layout[layoutAxisKey(i)] = {
       title: {
         text: channel.label + (channel.unit ? ` (${channel.unit})` : ""),
         font: { size: 11, color: "rgba(180,180,200,0.85)" },

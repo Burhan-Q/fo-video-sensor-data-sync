@@ -3,29 +3,18 @@ import { Text, TextVariant } from "@voxel51/voodo";
 
 import { useFrameSync } from "./useFrameSync";
 import { useSensorData } from "./useSensorData";
+import { PALETTE } from "./palette";
+import { Centered, sensorPanelMessage } from "./panelCommon";
 import type { Channel, Entity, SensorSchema } from "./types";
 import {
   arcPath,
   needleAngle,
   normalizeSignedDeg,
   linearFraction,
+  frameIndexFor,
   DIAL_SWEEP,
   formatReadout,
 } from "./gauges";
-
-// ---------------------------------------------------------------------------
-// Generic color palette (matches the Traces panel palette)
-// ---------------------------------------------------------------------------
-const PALETTE = [
-  "#1f77b4",
-  "#ff7f0e",
-  "#2ca02c",
-  "#d62728",
-  "#9467bd",
-  "#8c564b",
-  "#e377c2",
-  "#17becf",
-];
 
 const DIM_COLOR = "rgba(160,160,180,0.6)";
 const TRACK_COLOR = "rgba(80,80,100,0.5)";
@@ -33,11 +22,6 @@ const TRACK_COLOR = "rgba(80,80,100,0.5)";
 // ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------
-
-/** Clamp idx to [0, len-1]. */
-function clampIdx(idx: number, len: number): number {
-  return Math.max(0, Math.min(len - 1, idx));
-}
 
 /** Compute max absolute value in array (ignoring nulls); fallback to `def`. */
 function absMax(arr: Array<number | null> | undefined, def: number): number {
@@ -699,62 +683,25 @@ export function GaugesPanel() {
 
   const schema = data?.schema ?? null;
 
-  // 1-based currentFrame → 0-based array index; null → 0. The null → 0
-  // fallback is intentional: with no active timeline (e.g. the brief
-  // pre-initialization moment, or a non-modal context) the gauges show the
-  // first frame's values as a sensible default rather than blanking.
-  const frameIdx = currentFrame != null ? currentFrame - 1 : 0;
-
   const groups = useMemo(() => {
     if (!data || !schema || data.frame_numbers.length === 0) return null;
-    const idx = clampIdx(frameIdx, data.frame_numbers.length);
+    // Resolve the display index by FRAME NUMBER (not position): coverage may
+    // be sparse or start past frame 1. The null → first-frame fallback is
+    // intentional: with no active timeline (e.g. the brief pre-initialization
+    // moment, or a non-modal context) the gauges show the first covered
+    // frame's values as a sensible default rather than blanking.
+    const idx =
+      currentFrame != null ? frameIndexFor(data.frame_numbers, currentFrame) : 0;
     return buildGroups(schema, data.columns, idx);
-  }, [data, schema, frameIdx]);
+  }, [data, schema, currentFrame]);
 
   // ── Empty / loading / error states ───────────────────────────────────
-  if (!sampleId) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          Open a sample in the modal to view its sensor gauges.
-        </Text>
-      </div>
-    );
+  const message = sensorPanelMessage({ sampleId, error, loading, data }, "gauges");
+  if (message) {
+    return <Centered>{message}</Centered>;
   }
-  if (error) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          Failed to load sensor data: {error}
-        </Text>
-      </div>
-    );
-  }
-  if (loading || !data) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>Loading sensor data…</Text>
-      </div>
-    );
-  }
-  // Activated dataset (cap_id present) but no sensor_schema configured.
-  if (!schema) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          No sensor schema configured for this dataset.
-        </Text>
-      </div>
-    );
-  }
-  if (!data.frame_numbers || data.frame_numbers.length === 0 || !groups) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          No sensor data available for this sample.
-        </Text>
-      </div>
-    );
+  if (!groups) {
+    return <Centered>No sensor data available for this sample.</Centered>;
   }
 
   // ── Render ────────────────────────────────────────────────────────────
@@ -787,16 +734,6 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 0,
     color: "rgba(220,220,220,0.92)",
     overflowY: "auto",
-  },
-  center: {
-    display: "flex",
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    padding: 16,
-    textAlign: "center",
-    color: "rgba(170,170,190,0.85)",
   },
   gaugesContent: {
     display: "flex",

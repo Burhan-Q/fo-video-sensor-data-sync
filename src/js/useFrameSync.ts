@@ -39,10 +39,5 @@ export function useFrameSync() {
     [timelineName],
   );
 
-  return {
-    currentFrame,
-    seekFrame,
-    timelineName,
-    isTimelineActive: frame >= 0,
-  };
+  return { currentFrame, seekFrame };
 }

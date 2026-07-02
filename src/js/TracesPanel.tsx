@@ -1,9 +1,9 @@
-import React, { useMemo } from "react";
-import { Text, TextVariant } from "@voxel51/voodo";
+import React, { useCallback, useMemo } from "react";
 
 import Plot from "./plotly";
 import { useFrameSync } from "./useFrameSync";
 import { useSensorData } from "./useSensorData";
+import { Centered, sensorPanelMessage } from "./panelCommon";
 import { buildData, buildLayout } from "./tracesFigure";
 
 const PLOT_CONFIG = {
@@ -13,7 +13,7 @@ const PLOT_CONFIG = {
 };
 
 export function TracesPanel() {
-  const { currentFrame } = useFrameSync();
+  const { currentFrame, seekFrame } = useFrameSync();
   const { data, loading, error, sampleId } = useSensorData();
 
   const schema = data?.schema ?? null;
@@ -27,50 +27,22 @@ export function TracesPanel() {
     [schema, currentFrame],
   );
 
+  // Click-to-seek: clicking a trace point drives the video timeline to that
+  // frame (the x axis is FiftyOne frame numbers).
+  const handleClick = useCallback(
+    (event: { points?: Array<{ x?: unknown }> }) => {
+      const x = event?.points?.[0]?.x;
+      if (typeof x === "number") {
+        seekFrame(Math.round(x));
+      }
+    },
+    [seekFrame],
+  );
+
   // ── Empty / loading states ─────────────────────────────────────────
-  if (!sampleId) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          Open a sample in the modal to view its sensor traces.
-        </Text>
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          Failed to load sensor data: {error}
-        </Text>
-      </div>
-    );
-  }
-  if (loading || !data) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>Loading sensor data…</Text>
-      </div>
-    );
-  }
-  // Activated dataset (cap_id present) but no sensor_schema configured.
-  if (!schema) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          No sensor schema configured for this dataset.
-        </Text>
-      </div>
-    );
-  }
-  if (!data.frame_numbers || data.frame_numbers.length === 0) {
-    return (
-      <div style={styles.center}>
-        <Text variant={TextVariant.Sm}>
-          No sensor data available for this sample.
-        </Text>
-      </div>
-    );
+  const message = sensorPanelMessage({ sampleId, error, loading, data }, "traces");
+  if (message) {
+    return <Centered>{message}</Centered>;
   }
 
   // ── Chart ──────────────────────────────────────────────────────────
@@ -81,6 +53,7 @@ export function TracesPanel() {
           data={plotData as any}
           layout={layout as any}
           config={PLOT_CONFIG as any}
+          onClick={handleClick}
           useResizeHandler
           style={{ width: "100%", height: "100%" }}
         />
@@ -102,16 +75,6 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     minHeight: 0,
     position: "relative",
-  },
-  center: {
-    display: "flex",
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100%",
-    padding: 16,
-    textAlign: "center",
-    color: "rgba(170,170,190,0.85)",
   },
 };
 

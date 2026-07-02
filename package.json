@@ -22,25 +22,19 @@
     "@voxel51/voodo": "^0.0.35"
   },
   "peerDependencies": {
-    "@fiftyone/components": "*",
     "@fiftyone/operators": "*",
     "@fiftyone/playback": "*",
     "@fiftyone/plugins": "*",
-    "@fiftyone/spaces": "*",
     "@fiftyone/state": "*",
-    "@mui/material": "*",
     "react": "*",
     "react-dom": "*",
     "recoil": "*"
   },
   "peerDependenciesMeta": {
-    "@fiftyone/components": { "optional": true },
     "@fiftyone/operators": { "optional": true },
     "@fiftyone/playback": { "optional": true },
     "@fiftyone/plugins": { "optional": true },
-    "@fiftyone/spaces": { "optional": true },
     "@fiftyone/state": { "optional": true },
-    "@mui/material": { "optional": true },
     "react": { "optional": true },
     "react-dom": { "optional": true },
     "recoil": { "optional": true }

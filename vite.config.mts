@@ -17,10 +17,7 @@ const externals: Record<string, string> = {
   "@fiftyone/state": "__fos__",
   "@fiftyone/playback": "__fopb__",
   "@fiftyone/operators": "__foo__",
-  "@fiftyone/spaces": "__fosp__",
-  "@fiftyone/components": "__foc__",
   "@fiftyone/plugins": "__fop__",
-  "@mui/material": "__mui__",
 };
 
 // Bundled deps (Plotly, VOODO) reference `process.env` / `process.*` and

@@ -47,9 +47,8 @@ export interface UseSensorDataResult {
 
 /**
  * Reads the open modal sample id and fetches its sensor data. A single-entry
- * cache (cap 1) keyed by sample id is evicted whenever the sample changes —
- * sufficient for the MVP per the brief's LRU note. State is never set after
- * unmount.
+ * cache keyed by sample id is evicted whenever the sample changes. State is
+ * never set after unmount.
  */
 export function useSensorData(): UseSensorDataResult {
   const sampleId = useRecoilValue<string | null>(nullableModalSampleId);

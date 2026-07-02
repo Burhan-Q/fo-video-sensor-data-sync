@@ -121,6 +121,36 @@ export function linearFraction(value: number, lo: number, hi: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// frameIndexFor
+// ---------------------------------------------------------------------------
+
+/**
+ * Index into `frameNumbers` (sorted ascending) of the last entry <= `frame` —
+ * last-known-value semantics for sparse per-frame coverage. Clamps: before
+ * the first covered frame -> 0, past the last -> the last index. Returns -1
+ * only for an empty array.
+ *
+ * The read path compacts arrays to the frames that actually exist, so
+ * positional `frame - 1` indexing is wrong whenever coverage doesn't start
+ * at frame 1 or has gaps.
+ */
+export function frameIndexFor(frameNumbers: number[], frame: number): number {
+  const n = frameNumbers.length;
+  if (n === 0) return -1;
+  if (frame <= frameNumbers[0]) return 0;
+  if (frame >= frameNumbers[n - 1]) return n - 1;
+  // Binary search: last index with frameNumbers[i] <= frame.
+  let lo = 0;
+  let hi = n - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (frameNumbers[mid] <= frame) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+// ---------------------------------------------------------------------------
 // DIAL_SWEEP
 // ---------------------------------------------------------------------------
 

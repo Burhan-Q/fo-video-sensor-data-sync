@@ -3,9 +3,12 @@ export interface Channel {
   label: string;
   unit?: string;
   scope: "entity" | "shared";
-  range: [number, number | null] | null;
-  trace: boolean;
-  gauge: "radial" | "signed" | "linear" | "vector" | null;
+  // Optional in the schema contract (sensor/validate.py): omitted range means
+  // gauge auto-scaling, omitted trace means not traced, omitted gauge means
+  // no gauge widget.
+  range?: [number, number | null] | null;
+  trace?: boolean;
+  gauge?: "radial" | "signed" | "linear" | "vector" | null;
   color?: string;
   value_labels?: Record<string, string>; // numeric value -> display label (e.g. gear, turn_signal)
 }
@@ -21,6 +24,9 @@ export interface SensorSchema {
   frame_field: string;
   frame_base?: number;
   fps_field?: string | null;
+  // Load-time only (sensor/loader.py copies these row-0 keys onto the
+  // sample); present in the stamped schema but unused by the panels.
+  sample_fields?: string[];
   entities: Entity[];
   channels: Channel[];
 }

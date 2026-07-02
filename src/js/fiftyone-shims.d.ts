@@ -3,7 +3,6 @@
 
 declare module "@fiftyone/plugins" {
   export enum PluginComponentType {
-    Component = "Component",
     Panel = "Panel",
   }
   export interface PanelOptions {
@@ -21,31 +20,11 @@ declare module "@fiftyone/plugins" {
   export function registerComponent(params: RegisterComponentParams): void;
 }
 
-declare module "@fiftyone/spaces" {
-  export function usePanelStatePartial<T>(
-    key: string,
-    defaultState?: T,
-    local?: boolean,
-    scope?: string,
-  ): [T, (v: T) => void];
-  export function usePanelId(): string;
-}
-
 declare module "@fiftyone/playback" {
-  export interface TimelineSubscription {
-    id: string;
-    loadRange: (range: [number, number]) => Promise<void>;
-    renderFrame: (frameNumber: number) => void;
-  }
-  export interface TimelineHookResult {
-    subscribe: (subscription: TimelineSubscription) => void;
-    isTimelineInitialized: boolean;
-  }
   export interface DispatchTimelineSetFrameNumberEventParams {
     timelineName: string;
     newFrameNumber: number;
   }
-  export function useTimeline(timelineName: string): TimelineHookResult;
   export function useDefaultTimelineNameImperative(): {
     getName: () => string;
   };
@@ -66,22 +45,14 @@ declare module "@fiftyone/operators" {
         ) => void;
       },
     ) => void;
-    result: any;
-    isExecuting?: boolean;
-    error?: any;
-    hasExecuted?: boolean;
   };
 }
 
 declare module "@fiftyone/state" {
-  export const modalSample: any;
   // Recoil atom resolving to the open modal sample's id, or null when no
   // modal is open. Safe to read with no modal (unlike modalSample, which
   // dereferences a null modal context and throws).
   export const nullableModalSampleId: any;
-  export const view: any;
-  export const extendedSelection: any;
-  export const selectedSamples: any;
 }
 
 // react-plotly.js ships no bundled types; we only use the factory entry to
@@ -98,7 +69,4 @@ declare module "plotly.js-cartesian-dist-min" {
 
 declare module "recoil" {
   export function useRecoilValue<T>(atom: any): T;
-  export function useSetRecoilState<T>(
-    atom: any,
-  ): (v: T | ((prev: T) => T)) => void;
 }
