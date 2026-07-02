@@ -13,5 +13,4 @@ tests/
 scripts/
 .playwright-mcp/
 *.mp4
-*.frames.json
 
