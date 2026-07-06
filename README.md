@@ -11,7 +11,9 @@ panels follow playback, and clicking a point in the traces seeks the video
 to that frame. No per-dataset code: author a schema once, load your data
 with the loader convention, and the panels pick up the rest.
 
-Requires FiftyOne ≥ 1.17 and Python ≥ 3.11.
+Requires
+* FiftyOne ≥ 1.17
+* Python ≥ 3.11
 
 ## Installation
 
@@ -20,9 +22,9 @@ Install directly from GitHub with FiftyOne's plugin download command:
 ```bash
 fiftyone plugins download https://github.com/Burhan-Q/fo-video-sensor-data-sync
 ```
-
-**For local development**, clone the repository and symlink it into your
-FiftyOne plugins directory instead:
+<details><summary>For local development</summary>
+    
+Clone the repository and symlink it into your FiftyOne plugins directory instead:
 
 ```bash
 git clone https://github.com/Burhan-Q/fo-video-sensor-data-sync
@@ -33,35 +35,43 @@ ln -s "$(pwd)/fo-video-sensor-data-sync" "$(fiftyone config plugins_dir)/@Burhan
 (The plugins directory defaults to `~/fiftyone/__plugins__`; set
 `FIFTYONE_PLUGINS_DIR` to override it.)
 
-No build step is required — the runtime bundle (`dist/index.umd.js`) ships
-committed in this repository.
+No build step is required, the runtime bundle (`dist/index.umd.js`) ships
+committed in this repository, unless modifying the panel source code.
+
+</details>
+
 
 ## Quickstart
 
-**Try a shipped example** with the self-resolving demo script — it works
-from any working directory, since it resolves its own paths on disk:
+### Demo Examples
+
+**Try a shipped example** with the self-resolving demo script, note
+you must provide a real video filepath from your local computer:
 
 ```bash
-python "$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync/examples/load_demo.py" \
+PLUGIN="$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync"
+python "$PLUGIN/examples/load_demo.py" \
     /path/to/video.mp4 --example vehicle_controls
 ```
 
-(also `--example drone_flight`). This attaches the chosen example's schema
-and synthetic per-frame data to your video as a new sample and launches the
-FiftyOne App. Open that sample's modal to see the Sensor Traces and Sensor
-Gauges panels, synced to the video timeline — clicking a point in the
-traces seeks the video to that frame. Press Ctrl-C when done; the demo
-dataset is temporary and cleans itself up. (If you already have an App
-session open, pass `--no-launch` to load into a persistent dataset
-instead.)
+This attaches the chosen example's schema and **synthetic per-frame data** 
+to your video as a new sample and launches the FiftyOne App. Open that sample's 
+modal to see the Sensor Traces and Sensor Gauges panels, synced to the video 
+timeline. You will need to click the <kbd>+</kbd> at the top of the Sample Modal
+to add the panels, and then you can arrange them as needed. See the documentation 
+on [configuring Spaces in the FiftyOne App](https://docs.voxel51.com/user_guide/app.html#configuring-spaces-in-the-app) 
+if needed.
+When done, return to the terminal and press <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+The demo dataset is temporary and cleans itself up. Alternatively, if you already 
+have an App session open, pass `--no-launch` to load into a persistent dataset instead.
+
+### Loading Custom Data
 
 **Load your own data:** author a YAML schema describing your entities and
 channels (see [SCHEMA.md](SCHEMA.md) for the full contract), and prepare a
 wide-format JSON or CSV file of per-frame rows, with columns named by the
-field-name convention (one row per frame). Then load
-it with the `import_sensor_data` operator — a normal FiftyOne operator you
-can call directly from the SDK, with no plugin-internal import and no
-`sys.path` setup:
+field-name convention (one row per frame). Then load it with the `import_sensor_data` 
+operator — a normal FiftyOne operator you can call directly from the SDK:
 
 ```python
 import fiftyone as fo
@@ -87,8 +97,11 @@ validation only declares a `schema_path` string property). You can also
 copy `examples/load_demo.py` as a starting point if you'd rather script
 the load end to end; it self-resolves the plugin directory the same way.
 
-**Validate a schema (and optionally a data file) standalone**, without
-FiftyOne running, by invoking the validator by its file path:
+### Validate YAML Schema
+
+Both YAML schema and a single data file can be validated, or just he YAML
+schema. Validation can be run without FiftyOne running, by invoking the 
+validator directly from its file path:
 
 ```bash
 PLUGIN="$(fiftyone config plugins_dir)/@Burhan-Q/fo-video-sensor-data-sync"
@@ -150,6 +163,26 @@ The two panels — **Sensor Traces** and **Sensor Gauges** — appear on any
 their render config is read from `dataset.info["sensor_schema"]`. If a video
 dataset has no `cap_id` field on its samples, the panels do not activate for
 that dataset.
+
+### Gauges Panel
+
+<p align="center">
+    <img 
+        height="200"
+        alt="FiftyOne Plugin Video Sensor Data-Sync Gauges panel preview."
+        src="https://github.com/user-attachments/assets/8ec09f0d-b69f-405b-beaa-45ffc756b985"
+    />
+</p>
+
+### Traces Panel
+
+<p align="center">
+    <img
+        height="800"
+        alt="FiftyOne Plugin Video Sensor Data-Sync Traces panel preview"
+        src="https://github.com/user-attachments/assets/0fb152f4-1a13-4c16-bc1e-da73e56d7e63"
+    />
+</p>
 
 ## Known limitations
 
