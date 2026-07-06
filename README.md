@@ -1,6 +1,15 @@
-# fo-video-sensor-data-sync
+# Video Sensor Data-Sync FiftyOne Plugin
 
-A community [FiftyOne](https://github.com/voxel51/fiftyone) plugin that syncs
+<p align="center">
+  <img
+    height="800"
+    alt="Video data sync plugin for FiftyOne demonstration."
+    src="https://github.com/user-attachments/assets/487d87df-af67-4dcc-8c47-2f8eee55a60e"
+  />
+</p>
+
+
+A [FiftyOne](https://github.com/voxel51/fiftyone) plugin that syncs
 any per-frame numeric sensor data with video — frame-accurate and driven
 entirely by a declarative schema — via two modal panels (traces + gauges)
 that track the video timeline during playback. Sync runs both ways: the
