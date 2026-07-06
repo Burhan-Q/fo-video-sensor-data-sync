@@ -1,12 +1,6 @@
 # Video Sensor Data-Sync FiftyOne Plugin
 
-<p align="center">
-  <img
-    height="800"
-    alt="Video data sync plugin for FiftyOne demonstration."
-    src="https://github.com/user-attachments/assets/487d87df-af67-4dcc-8c47-2f8eee55a60e"
-  />
-</p>
+https://github.com/user-attachments/assets/487d87df-af67-4dcc-8c47-2f8eee55a60e
 
 
 A [FiftyOne](https://github.com/voxel51/fiftyone) plugin that syncs
