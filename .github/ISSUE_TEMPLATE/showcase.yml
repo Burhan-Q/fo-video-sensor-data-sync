@@ -1,0 +1,87 @@
+name: 🎬 Showcase
+description: Show off how you used or extended the plugin.
+title: "[Showcase]: "
+labels: ["showcase"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your work! Use this form to show what you built with
+        the plugin:a cool dataset, a slick synced view, or a fork you hacked on.
+        Only the first field is required; fill in whatever else is relevant (video
+        clips are highly-encouraged).
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you build?
+      description: The project and the per-frame sensor data behind it, in 1–3 sentences.
+      placeholder: e.g. Synced egocentric cockpit video with throttle / velocity / elevation gauges for a in-flight dataset.
+    validations:
+      required: true
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Sensor data domain
+      description: Roughly what kind of per-frame data is this?
+      options:
+        - Automotive / vehicle
+        - Aerospace
+        - Drone / UAV
+        - Robotics
+        - Biosignals / wearables / medical
+        - Industrial / IoT
+        - Sports / motion
+        - Other
+    validations:
+      required: false
+  - type: upload
+    id: media
+    attributes:
+      label: Video or screenshots
+      description: >-
+        Upload a short screen recording (preferred) or a few screenshots of your
+        project in action.
+    validations:
+      required: false
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.webm"
+  - type: input
+    id: link
+    attributes:
+      label: Project link
+      description: Public repo, blog post, demo, etc., especially if modified.
+      placeholder: https://github.com/you/your-project
+    validations:
+      required: false
+  - type: dropdown
+    id: usage
+    attributes:
+      label: How did you use it?
+      options:
+        - Used it as-is (schema + loader, no code changes)
+        - Extended it via schema only (new channels / gauges, no code changes)
+        - Forked & modified the code
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: changes
+    attributes:
+      label: What did you change or extend?
+      description: If you forked or hacked on it, what did you add or modify? Leave blank if you used it as-is.
+      placeholder: e.g. new gauge, custom panel, modified data loader, etc.
+    validations:
+      required: false
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else to add?
+      description: Anything else you'd like to share or mention?
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Sharing
+      options:
+        - label: I'm happy for the maintainer to reshare this showcase (with credit).
+          required: false

@@ -1,0 +1,9 @@
+# Templates are offered, but users can still open a freeform issue for edge cases.
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 FiftyOne documentation
+    url: https://docs.voxel51.com
+    about: Guides and API reference for FiftyOne itself (not specific to this plugin).
+  - name: 💬 FiftyOne Community Discord
+    url: https://discord.gg/fiftyone-community
+    about: Ask usage questions and chat with the FiftyOne community.

@@ -1,0 +1,72 @@
+name: 🐛 Bug report
+description: Report something that isn't working as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in the details below
+        so it can be reproduced quickly.
+  - type: textarea
+    id: describe
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what goes wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: What did you do? Include the operator call, schema, or data shape if relevant.
+      placeholder: |
+        1. Load data with `import_sensor_data(...)`
+        2. Open the sample modal and add the panels
+        3. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: false
+  - type: upload
+    id: media
+    attributes:
+      label: Screenshots or recording of the problem
+      description: Upload screenshots or a short screen recording that show the problem, if applicable.
+    validations:
+      required: false
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.webm,.log,.txt"
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Fill in the versions you're running.
+      value: |
+        - FiftyOne version:
+        - Plugin version:
+        - Python version:
+        - OS:
+        - Browser (if an App / panel issue):
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / console output
+      description: Paste any relevant terminal or browser-console output. Auto-formatted — no backticks needed.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: schema
+    attributes:
+      label: Schema or data snippet
+      description: If relevant, paste the schema YAML or a sample data row involved.
+      render: yaml
+    validations:
+      required: false
