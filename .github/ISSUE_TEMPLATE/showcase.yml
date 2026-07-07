@@ -6,10 +6,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for sharing your work! Use this form to show what you built with
-        the plugin:a cool dataset, a slick synced view, or a fork you hacked on.
-        Only the first field is required; fill in whatever else is relevant (video
-        clips are highly-encouraged).
+        Thanks for sharing your work! Use this form to show what you built with the plugin: \
+        a cool dataset, a slick synced view, or a fork you hacked on. Only the first field is \
+        required; fill in whatever else is relevant (video clips are highly-encouraged).
   - type: textarea
     id: what
     attributes:
